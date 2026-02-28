@@ -35,7 +35,7 @@ logs/
 
 # Notebooks
 notebooks/.ipynb_checkpoints/
-*.ipynb
+.ipynb_checkpoints/
 
 # Environment / secrets
 .env
