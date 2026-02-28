@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Data (large files — keep structure, ignore contents)
+data/raw/nvd_cache/
+data/raw/*.jsonl
+data/processed/
+*.jsonl
+!data/annotated/*.bio
+!data/annotated/*.jsonl
+
+# Model checkpoints (large binary files)
+models/*/best/
+models/*/checkpoint-*/
+models/**/*.pt
+models/**/*.bin
+models/**/pytorch_model.bin
+logs/
+
+# Notebooks
+notebooks/.ipynb_checkpoints/
+*.ipynb
+
+# Environment / secrets
+.env
+*.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Streamlit
+.streamlit/

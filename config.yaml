@@ -1,0 +1,80 @@
+# CPE-Identifier Global Configuration
+
+# Entity labels
+labels:
+  - O
+  - B-VENDOR
+  - I-VENDOR
+  - B-PRODUCT
+  - I-PRODUCT
+  - B-VERSION
+  - I-VERSION
+  - B-UPDATE
+  - I-UPDATE
+  - B-EDITION
+  - I-EDITION
+
+entity_types:
+  - VENDOR
+  - PRODUCT
+  - VERSION
+  - UPDATE
+  - EDITION
+
+# Data settings
+data:
+  max_seq_length: 128
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  raw_dir: data/raw
+  processed_dir: data/processed
+  annotated_dir: data/annotated
+
+# NVD API settings
+nvd:
+  base_url: "https://services.nvd.nist.gov/rest/json/cves/2.0"
+  results_per_page: 2000
+  delay_seconds: 0.6   # NVD rate limit: ~100 req/30s without key
+  # Set NVD_API_KEY env var for higher rate limits
+  cache_dir: data/raw/nvd_cache
+
+# Model settings
+models:
+  bert:
+    pretrained: "bert-base-uncased"
+    dropout: 0.1
+    learning_rate: 2.0e-5
+    weight_decay: 0.01
+    warmup_ratio: 0.1
+
+  xlnet:
+    pretrained: "xlnet-base-cased"
+    dropout: 0.1
+    learning_rate: 2.0e-5
+    weight_decay: 0.01
+    warmup_ratio: 0.1
+
+  gpt2:
+    pretrained: "gpt2"
+    dropout: 0.1
+    learning_rate: 2.0e-5
+    weight_decay: 0.01
+    warmup_ratio: 0.1
+
+# Training settings
+training:
+  epochs: 20
+  batch_size: 16
+  eval_batch_size: 32
+  gradient_clip: 1.0
+  seed: 42
+  save_dir: models
+  log_dir: logs
+
+# Augmentation settings
+augmentation:
+  model: "distilroberta-base"
+  top_k: 10
+  augment_ratio: 0.15   # fraction of non-entity tokens to mask
+  num_augmented_per_sample: 2
