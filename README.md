@@ -4,6 +4,11 @@ Automated **CPE (Common Platform Enumeration)** extraction from **CVE (Common Vu
 
 Based on: [CPE-Identifier: Automated CPE identification and naming using deep learning and NLP for enhanced CVE/NVD labeling](https://arxiv.org/abs/2405.13568)
 
+```
+Hu, Wanyu, and Vrizlynn L. L. Thing. “CPE-Identifier: Automated CPE Identification and CVE Summaries Annotation with Deep Learning and NLP.” *arXiv preprint* arXiv:2405.13568, May 22, 2024. https://arxiv.org/abs/2405.13568
+```
+
+
 ## Performance (BERT — best model)
 
 | Metric | Score |
