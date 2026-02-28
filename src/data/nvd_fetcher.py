@@ -85,6 +85,9 @@ class NVDFetcher:
             return self._parse_cve(data["vulnerabilities"][0]["cve"])
         return None
 
+    # NVD API 2.0 hard limit: pubStartDate/pubEndDate range ≤ 120 days
+    MAX_DATE_RANGE_DAYS = 119
+
     def stream_cves(
         self,
         start_date: str,
@@ -92,8 +95,42 @@ class NVDFetcher:
     ) -> Generator[Dict, None, None]:
         """Stream CVEs between ISO date strings (YYYY-MM-DDThh:mm:ss.000).
 
-        Yields parsed CVE dicts. Useful for large ranges without RAM pressure.
+        Automatically splits ranges longer than 119 days into chunks
+        (NVD API 2.0 enforces a 120-day maximum window).
+
+        Yields parsed CVE dicts.
         """
+        fmt = "%Y-%m-%dT%H:%M:%S.%f"
+        # Strip trailing zeros from milliseconds for parsing
+        def parse_dt(s: str) -> datetime:
+            # Handle both .000 and full microsecond formats
+            try:
+                return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%f")
+            except ValueError:
+                return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S")
+
+        dt_start = parse_dt(start_date)
+        dt_end   = parse_dt(end_date)
+        chunk_delta = timedelta(days=self.MAX_DATE_RANGE_DAYS)
+
+        chunk_start = dt_start
+        while chunk_start < dt_end:
+            chunk_end = min(chunk_start + chunk_delta, dt_end)
+
+            cs = chunk_start.strftime("%Y-%m-%dT%H:%M:%S.000")
+            ce = chunk_end.strftime("%Y-%m-%dT%H:%M:%S.000")
+
+            yield from self._stream_chunk(cs, ce)
+
+            # Advance past this chunk (add 1 second to avoid overlap)
+            chunk_start = chunk_end + timedelta(seconds=1)
+
+    def _stream_chunk(
+        self,
+        start_date: str,
+        end_date: str,
+    ) -> Generator[Dict, None, None]:
+        """Fetch a single ≤120-day window with pagination."""
         start_index = 0
         total_results = None
 
@@ -110,13 +147,15 @@ class NVDFetcher:
 
             if total_results is None:
                 total_results = data.get("totalResults", 0)
-                logger.info("Total CVEs in range: %d", total_results)
+                logger.debug(
+                    "Chunk %s→%s: %d CVEs", start_date[:10], end_date[:10], total_results
+                )
 
             for item in data.get("vulnerabilities", []):
                 yield self._parse_cve(item["cve"])
 
             start_index += len(data.get("vulnerabilities", []))
-            if start_index >= total_results:
+            if start_index >= (total_results or 0):
                 break
 
             time.sleep(self.delay)
@@ -151,12 +190,18 @@ class NVDFetcher:
         use_cache: bool = True,
     ) -> List[Dict]:
         cache_file = self.cache_dir / f"cves_{year}.jsonl"
-        if use_cache and cache_file.exists():
+
+        # Use cache only if the file is non-empty (empty = previous failed run)
+        if use_cache and cache_file.exists() and cache_file.stat().st_size > 10:
             logger.info("Loading cached CVEs for %d from %s", year, cache_file)
-            return self.load_cves(str(cache_file))
+            cached = self.load_cves(str(cache_file))
+            if cached:
+                return cached
 
         start_date = f"{year}-01-01T00:00:00.000"
-        end_date = f"{year}-12-31T23:59:59.999"
+        end_date   = f"{year}-12-31T23:59:59.999"
+
+        # Year is split automatically into ≤119-day chunks inside stream_cves
         cves = list(
             tqdm(
                 self.stream_cves(start_date, end_date),
