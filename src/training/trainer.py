@@ -64,7 +64,11 @@ class TrainingConfig:
 
     def resolve_device(self) -> torch.device:
         if self.device == "auto":
-            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            if torch.cuda.is_available():
+                return torch.device("cuda")
+            if torch.backends.mps.is_available():
+                return torch.device("mps")
+            return torch.device("cpu")
         return torch.device(self.device)
 
 

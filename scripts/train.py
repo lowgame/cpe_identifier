@@ -66,6 +66,8 @@ def parse_args():
     parser.add_argument("--grad-clip",    type=float, default=1.0)
     parser.add_argument("--patience",     type=int,   default=5)
     parser.add_argument("--seed",         type=int,   default=42)
+    parser.add_argument("--num-workers",  type=int,   default=4,
+                        help="DataLoader worker processes (default: 4)")
 
     # Augmentation
     parser.add_argument("--augment",    action="store_true", default=False,
@@ -131,6 +133,7 @@ def main():
         train_ratio=args.train_ratio,
         val_ratio=args.val_ratio,
         seed=args.seed,
+        num_workers=args.num_workers,
     )
     logger.info(str(data_module))
 

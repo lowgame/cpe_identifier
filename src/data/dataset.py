@@ -119,7 +119,7 @@ class NERDataset(Dataset):
 
         # Wrap back into NERDataset containers (no re-tokenization)
         def subset_to_dataset(subset) -> "NERDataset":
-            ds = object.__new__(cls)
+            ds = object.__new__(type(self))
             ds.preprocessor = self.preprocessor
             ds.items = [self.items[i] for i in subset.indices]
             return ds
@@ -146,6 +146,9 @@ class NERDataLoader:
         self.batch_size = batch_size
         self.eval_batch_size = eval_batch_size
         self.num_workers = num_workers
+        import torch
+        self._pin_memory = torch.cuda.is_available()
+        self._persistent = num_workers > 0
 
     @property
     def train(self) -> DataLoader:
@@ -155,6 +158,8 @@ class NERDataLoader:
             shuffle=True,
             num_workers=self.num_workers,
             collate_fn=ner_collate_fn,
+            pin_memory=self._pin_memory,
+            persistent_workers=self._persistent,
         )
 
     @property
@@ -165,6 +170,8 @@ class NERDataLoader:
             shuffle=False,
             num_workers=self.num_workers,
             collate_fn=ner_collate_fn,
+            pin_memory=self._pin_memory,
+            persistent_workers=self._persistent,
         )
 
     @property
@@ -175,6 +182,8 @@ class NERDataLoader:
             shuffle=False,
             num_workers=self.num_workers,
             collate_fn=ner_collate_fn,
+            pin_memory=self._pin_memory,
+            persistent_workers=self._persistent,
         )
 
     def __repr__(self) -> str:
